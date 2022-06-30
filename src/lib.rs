@@ -16,8 +16,12 @@ type Error = Box<dyn std::error::Error + Send + Sync>;
 /// The function uses the coingecko API to fetch price for the given [`crate::coingecko::Token`] and [`crate::Currency`]
 /// It will return a [`crate::coingecko::CoinGeckoPrice`] result
 #[tokio::main]
-pub async fn get_prices_for(token: &str, currency: &Currency) -> Result<CoinGeckoPrice, Error> {
-    let price = create_request(token, currency).await?;
+pub async fn get_prices_for(
+    chain_type: Option<&str>,
+    token: &str,
+    currency: &Currency,
+) -> Result<CoinGeckoPrice, Error> {
+    let price = create_request(chain_type, token, currency).await?;
     let coin_per_dollar = token_price_per_currency(&price, currency).await?;
 
     Ok(CoinGeckoPrice {
@@ -57,7 +61,7 @@ mod tests {
     #[test]
     fn get_usd_prices_coingecko_ethereum() -> Result<(), Error> {
         let eth_string = "Ethereum";
-        let ethereum_prices = get_prices_for(eth_string, &Currency::USD)?;
+        let ethereum_prices = get_prices_for(None, eth_string, &Currency::USD)?;
         println!(
             "[{}] is : {:.} in [{}] and coin price per [{}] : {:.}",
             eth_string,
@@ -72,7 +76,7 @@ mod tests {
     #[test]
     fn get_usd_prices_coingecko_bitcoin() -> Result<(), Error> {
         let btc_string = "Bitcoin";
-        let btc_prices = get_prices_for(btc_string, &Currency::USD)?;
+        let btc_prices = get_prices_for(None, btc_string, &Currency::USD)?;
         println!(
             "[{}] is : {:.} in [{}] and coin price per [{}] : {:.}",
             btc_string,
@@ -87,7 +91,7 @@ mod tests {
     #[test]
     fn get_eth_prices_coingecko_aave() -> Result<(), Error> {
         let aave_string = "Aave";
-        let aave_prices = get_prices_for(aave_string, &Currency::ETH)?;
+        let aave_prices = get_prices_for(None, aave_string, &Currency::ETH)?;
         println!(
             "[{}] is : {:.} in [{}] and coin price per [{}] : {:.}",
             aave_string,
@@ -103,13 +107,30 @@ mod tests {
     #[test]
     fn get_btc_prices_coingecko_ethereum() -> Result<(), Error> {
         let eth_string = "Ethereum";
-        let eth_prices = get_prices_for(eth_string, &Currency::BTC)?;
+        let eth_prices = get_prices_for(None, eth_string, &Currency::BTC)?;
         println!(
             "[{}] is : {:.} in [{}] and coin price per [{}] : {:.}",
             eth_string,
             eth_prices.currency_price,
             Currency::BTC,
             Currency::BTC,
+            eth_prices.coin_per_dollar
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_token_prices_coingecko_ethereum() -> Result<(), Error> {
+        let chain_type = "ethereum";
+        let contract_address = "0x0d8775f648430679a709e98d2b0cb6250d2887ef";
+        let eth_prices = get_prices_for(Some(chain_type), &contract_address, &Currency::ETH)?;
+        println!(
+            "[{}] is : {:.} in [{}] and coin price per [{}] : {:.}",
+            contract_address,
+            eth_prices.currency_price,
+            Currency::ETH,
+            Currency::ETH,
             eth_prices.coin_per_dollar
         );
 

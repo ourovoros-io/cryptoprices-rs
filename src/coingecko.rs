@@ -20,11 +20,11 @@ pub async fn token_price_per_currency(
         Currency::USD => Ok(1.0 * 1.0 / token_price),
         Currency::EUR => todo!(),
         Currency::ETH => {
-            let ether_price = create_request("Ethereum", &Currency::USD).await?;
+            let ether_price = create_request(None, "Ethereum", &Currency::USD).await?;
             Ok(token_price / ether_price)
         }
         Currency::BTC => {
-            let btc_price = create_request("Bitcoin", &Currency::BTC).await?;
+            let btc_price = create_request(None, "Bitcoin", &Currency::BTC).await?;
             Ok(token_price / btc_price)
         }
     }
@@ -54,12 +54,32 @@ pub fn get_currency_value(
 }
 
 /// Creates a request against the coingecko api that returns the [`crate::currency::Currency`] value for the [`Coin`] given
-pub async fn create_request(token: &str, currency: &Currency) -> Result<f64, crate::Error> {
+pub async fn create_request(
+    chain_type: Option<&str>,
+    token: &str,
+    currency: &Currency,
+) -> Result<f64, crate::Error> {
     let token_list = TokenList::new()?;
-    let token = token_list.get_token_id(token)?;
+    if chain_type.is_none() {
+        let token = token_list.get_token_id(token)?;
+
+        let resp = reqwest::get(format!(
+            "https://api.coingecko.com/api/v3/simple/price?ids={}&vs_currencies={}",
+            token, currency
+        ))
+        .await?
+        .json::<serde_json::Value>()
+        .await?;
+
+        return Ok(get_currency_value(&resp, &token, currency)?);
+    }
+    println!("{}", format!(
+        "https://api.coingecko.com/api/v3/simple/token_price/{}?contract_addresses={}&vs_currencies={}",
+        chain_type.unwrap(), token, currency
+    ));
     let resp = reqwest::get(format!(
-        "https://api.coingecko.com/api/v3/simple/price?ids={}&vs_currencies={}",
-        token, currency
+        "https://api.coingecko.com/api/v3/simple/token_price/{}?contract_addresses={}&vs_currencies={}",
+        chain_type.unwrap(), token, currency
     ))
     .await?
     .json::<serde_json::Value>()
