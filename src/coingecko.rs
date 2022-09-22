@@ -71,12 +71,8 @@ pub async fn create_request(
         .json::<serde_json::Value>()
         .await?;
 
-        return Ok(get_currency_value(&resp, &token, currency)?);
+        return get_currency_value(&resp, &token, currency);
     }
-    println!("{}", format!(
-        "https://api.coingecko.com/api/v3/simple/token_price/{}?contract_addresses={}&vs_currencies={}",
-        chain_type.unwrap(), token, currency
-    ));
     let resp = reqwest::get(format!(
         "https://api.coingecko.com/api/v3/simple/token_price/{}?contract_addresses={}&vs_currencies={}",
         chain_type.unwrap(), token, currency
@@ -85,7 +81,7 @@ pub async fn create_request(
     .json::<serde_json::Value>()
     .await?;
 
-    Ok(get_currency_value(&resp, &token, currency)?)
+    get_currency_value(&resp, token, currency)
 }
 
 pub struct TokenList(Vec<Token>);
@@ -106,7 +102,7 @@ impl TokenList {
     }
 
     pub fn get_token_id(&self, token: &str) -> Result<String, crate::Error> {
-        for t in self.0.iter() {
+        for t in &self.0 {
             if t.name == token {
                 return Ok(t.id.clone());
             }

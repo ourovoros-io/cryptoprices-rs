@@ -35,16 +35,16 @@ pub async fn get_prices_for(
 #[tokio::main]
 pub async fn get_uniswap_prices_for(
     pair_address: &str,
-    version_provider: crate::uniswap::UniswapVersion,
+    version_provider: crate::uniswap::Version,
     currency: &Currency,
-) -> Result<crate::uniswap::UniswapPairPrice, Error> {
+) -> Result<crate::uniswap::PairPrice, Error> {
     // Todo: precision should be dynamic based on pair
     let pair = crate::uniswap::create_uniswap_request(pair_address, version_provider).await?;
     let coin_per_dollar_token0 =
         token_price_per_currency(&pair.token0_price.parse::<f64>()?, currency).await?;
     let coin_per_dollar_token1 =
         token_price_per_currency(&pair.token1_price.parse::<f64>()?, currency).await?;
-    Ok(crate::uniswap::UniswapPairPrice {
+    Ok(crate::uniswap::PairPrice {
         pair: pair.id,
         token0: pair.token0.id,
         token0_price: pair.token0_price,
@@ -142,7 +142,7 @@ mod tests {
         let pair_address = "0xb4e16d0168e52d35cacd2c6185b44281ec28c9dc";
         let uniswap_pair_price = get_uniswap_prices_for(
             pair_address,
-            crate::uniswap::UniswapVersion::V2,
+            crate::uniswap::Version::V2,
             &Currency::USD,
         )?;
         println!(
@@ -157,7 +157,7 @@ mod tests {
         let pair_address2 = "0xbb2b8038a1640196fbe3e38816f3e67cba72d940";
         let uniswap_pair_price = get_uniswap_prices_for(
             pair_address2,
-            crate::uniswap::UniswapVersion::V2,
+            crate::uniswap::Version::V2,
             &Currency::USD,
         )?;
         println!(
@@ -172,7 +172,7 @@ mod tests {
         let pair_address3 = "0x5777d92f208679db4b9778590fa3cab3ac9e2168";
         let uniswap_pair_price = get_uniswap_prices_for(
             pair_address3,
-            crate::uniswap::UniswapVersion::V3,
+            crate::uniswap::Version::V3,
             &Currency::USD,
         )?;
         println!(

@@ -24,10 +24,10 @@ impl Currency {
 impl std::fmt::Display for Currency {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match *self {
-            Currency::USD => write!(f, "usd"),
-            Currency::EUR => write!(f, "eur"),
-            Currency::ETH => write!(f, "eth"),
-            Currency::BTC => write!(f, "btc"),
+            Self::USD => write!(f, "usd"),
+            Self::EUR => write!(f, "eur"),
+            Self::ETH => write!(f, "eth"),
+            Self::BTC => write!(f, "btc"),
         }
     }
 }

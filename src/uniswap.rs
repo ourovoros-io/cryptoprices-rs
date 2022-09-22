@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 /// Represents the return of the [`crate::get_uniswap_prices_for`] function
-pub struct UniswapPairPrice {
+pub struct PairPrice {
     pub pair: String,
     pub token0: String,
     pub token0_price: String,
@@ -12,36 +12,36 @@ pub struct UniswapPairPrice {
 }
 
 /// Represents the current supported versions of uniswap
-pub enum UniswapVersion {
+pub enum Version {
     V2,
     V3,
 }
 
-impl UniswapVersion {
+impl Version {
     /// Returns the [`UniswapVersion`] version as a [`usize`]
-    pub fn get_version(&self) -> usize {
+    pub const fn get_version(&self) -> usize {
         match self {
-            UniswapVersion::V2 => 2,
-            UniswapVersion::V3 => 3,
+            Self::V2 => 2,
+            Self::V3 => 3,
         }
     }
 }
 
-impl Default for UniswapVersion {
+impl Default for Version {
     /// Returns the [`UniswapVersion::V2`] as the default version
     fn default() -> Self {
         Self::V2
     }
 }
 
-impl ToString for UniswapVersion {
+impl ToString for Version {
     /// Returns the [`UniswapVersion`] as [`String`]
     fn to_string(&self) -> String {
         match self {
-            UniswapVersion::V2 => {
+            Self::V2 => {
                 "https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2".to_string()
             }
-            UniswapVersion::V3 => {
+            Self::V3 => {
                 "https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3".to_string()
             }
         }
@@ -51,11 +51,11 @@ impl ToString for UniswapVersion {
 /// Creates a request against the uniswap api that returns the [`Pair`] struct of info for the [`pair_address`] given
 pub(crate) async fn create_uniswap_request(
     pair_address: &str,
-    version_provider: crate::uniswap::UniswapVersion,
+    version_provider: crate::uniswap::Version,
 ) -> Result<Pair, crate::Error> {
     let ident = match version_provider {
-        UniswapVersion::V2 => "pair".to_string(),
-        UniswapVersion::V3 => "pool".to_string(),
+        Version::V2 => "pair".to_string(),
+        Version::V3 => "pool".to_string(),
     };
     let mut headers = reqwest::header::HeaderMap::new();
     headers.insert("Content-Type", "application/json".parse().unwrap());
@@ -81,7 +81,7 @@ pub(crate) async fn create_uniswap_request(
         .body(data_str)
         .send()
         .await?
-        .json::<UniswapResponse>()
+        .json::<UniResponse>()
         .await?;
     Ok(match res.data.inner {
         InnerData::V2 { pair } => pair,
@@ -89,27 +89,27 @@ pub(crate) async fn create_uniswap_request(
     })
 }
 
-/// Represents a query against the uniswap graphQL
+/// Represents a query against the uniswap `graphQL`
 #[derive(Serialize, Deserialize)]
 struct QLQuery {
     query: String,
 }
 
 /// Represents the return from uniswap api request
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct UniswapResponse {
+#[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct UniResponse {
     pub data: Data,
 }
 
 /// Represents the incoming [`Data`] and contains a flatten untagged [`InnerData`] enum
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Data {
     #[serde(flatten)]
     inner: InnerData,
 }
 
 /// Represents the different [`UniswapVersion`] structures
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum InnerData {
     #[serde(rename = "pair")]
@@ -127,7 +127,7 @@ impl Default for InnerData {
 }
 
 /// Represents the uniswap pair
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Pair {
     pub id: String,
@@ -140,14 +140,14 @@ pub struct Pair {
 }
 
 /// Represents token0 of a uniswap [`Pair`]
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Token0 {
     pub id: String,
 }
 
 /// Represents token1 of a uniswap [`Pair`]
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Token1 {
     pub id: String,
